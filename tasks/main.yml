@@ -1,10 +1,10 @@
 ---
-# tasks file for package install / system update
-
-- name: Include install tasks
-  include_tasks: install.yml
-  tags: install
+# tasks file for system update / package install
 
 - name: Include update tasks
   include_tasks: update.yml
   tags: update
+
+- name: Include install tasks
+  include_tasks: install.yml
+  tags: install
