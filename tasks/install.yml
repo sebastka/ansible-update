@@ -1,0 +1,62 @@
+---
+# Install base packages
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - git
+      - htop
+      - iftop
+      - iotop
+      - iptraf
+      - jq
+      - ldnsutils
+      - net-tools
+      - nmap
+      - rsync
+      - screen
+      - tree
+      - unzip
+      - vim
+      - zip
+    state: present
+  become: yes
+
+- name: Install base packages (bookworm-only)
+  ansible.builtin.apt:
+    name:
+      - duf
+    state: present
+  when: ansible_distribution_release == 'bookworm'
+  become: yes
+
+- name: Install qemu-guest-agent
+  ansible.builtin.apt: name=qemu-guest-agent state=present
+  when: ansible_virtualization_type == 'kvm'
+  become: yes
+
+- name: Fetch latest chezmoi data
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/twpayne/chezmoi/releases/latest
+    return_content: yes
+    status_code: [200, 403]
+  register: chezmoi_latest
+
+- name: Set cz_latest_version
+  ansible.builtin.set_fact:
+    cz_latest_version: "{{ chezmoi_latest.content | from_json | json_query('tag_name') | regex_replace('^v', '') }}"
+  when: chezmoi_latest.status == 200
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: apt
+  when: cz_latest_version is defined
+
+- name: Update chezmoi if local version is older than latest version
+  ansible.builtin.apt:
+    deb: "https://github.com/twpayne/chezmoi/releases/download/v{{ cz_latest_version }}/chezmoi_{{ cz_latest_version }}_linux_amd64.deb"
+    state: present
+  when: cz_latest_version is defined and ( ansible_facts.packages.chezmoi is not defined or ansible_facts.packages.chezmoi.0.version < cz_latest_version )
+  become: yes

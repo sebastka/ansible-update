@@ -1,0 +1,11 @@
+---
+# Update system
+
+- name: Update system
+  ansible.builtin.apt:
+    update_cache: yes
+    upgrade: '{{ item }}'
+    autoremove: yes
+    autoclean: yes
+  loop: [ 'safe', 'dist' ]
+  become: yes

@@ -1,0 +1,6 @@
+---
+# tasks file for update
+
+- name: Include update tasks
+  include_tasks: update.yml
+  tags: update
